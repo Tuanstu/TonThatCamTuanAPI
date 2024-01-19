@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using Microsoft.IdentityModel.Tokens;
+using System.Reflection;
 using System.Text.Json;
 using TonThatCamTuanAPI.Common;
 using TonThatCamTuanAPI.Models.Entity;
@@ -21,14 +22,15 @@ namespace TonThatCamTuanAPI.Controllers
         {
             this._context = context;
         }
-        //[AllowAnonymous] Moi nguoi co the xai
 
+        [AllowAnonymous] //Moi nguoi co the xai
         [HttpGet("danh-sach-san-pham")]
-        public IActionResult DanhSachSanPham() //Kieu nay co the sai nhung ham dung sai cua chuong trinh nhu la Ok(), BadRequest(),...
+        public IActionResult DanhSachSanPham(string? timkiem) //nay moi them khuc tim kiem 
         {
             //var items = _context.Products.ToList();
             //return Ok(items);
-            var items = _context.Products.Select(c => new OutputProduct() //Select de chon ra cai specific muon tra ve trong TH nay thi khong tra cai filter
+
+            var items = _context.Products.Where(c => c.Filter.Contains((timkiem ?? "").ToLower())).Select(c => new OutputProduct() //Select de chon ra cai specific muon tra ve trong TH nay thi khong tra cai filter
             {
                 Id = c.Id,
                 ProductName = c.ProductName,
@@ -40,7 +42,28 @@ namespace TonThatCamTuanAPI.Controllers
 
             }).ToList();
             return Ok(items);
+
         }
+
+        //Cai nay get product ma chua co tim kiem
+        //[HttpGet("danh-sach-san-pham")]
+        //public IActionResult DanhSachSanPham() //Kieu nay co the sai nhung ham dung sai cua chuong trinh nhu la Ok(), BadRequest(),...
+        //{
+        //    //var items = _context.Products.ToList();
+        //    //return Ok(items);
+        //    var items = _context.Products.Select(c => new OutputProduct() //Select de chon ra cai specific muon tra ve trong TH nay thi khong tra cai filter
+        //    {
+        //        Id = c.Id,
+        //        ProductName = c.ProductName,
+        //        Price = c.Price,
+        //        UrlImages = c.Image,
+        //        Detail = c.Detail,
+        //        Material = c.Material,
+        //        Size = c.Size,
+
+        //    }).ToList();
+        //    return Ok(items);
+        //}
         [HttpGet("danh-sach-san-pham-2")]
         public List<Product> DanhSachSanPham2() // Kieu nay thi dinh dang cho no mot kieu nhat dinh la mot cai list
         {
@@ -48,10 +71,13 @@ namespace TonThatCamTuanAPI.Controllers
             return items;
         }
         //Api get 1 data
+
+        [AllowAnonymous]
         [HttpGet("data-product/{id}")]
         public IActionResult ItemProduct(string id)
         {
-           
+
+
             var items = _context.Products.Select(c => new OutputProduct() //Select de chon ra cai specific muon tra ve trong TH nay thi khong tra cai filter
             {
                 Id = c.Id,
@@ -62,7 +88,7 @@ namespace TonThatCamTuanAPI.Controllers
                 Material = c.Material,
                 Size = c.Size,
 
-            }).ToList().FirstOrDefault(c=> c.Id == id);
+            }).ToList().FirstOrDefault(c => c.Id == id);
             return Ok(items);
         }
         [HttpDelete("xoa-product/{id}")]
@@ -70,14 +96,14 @@ namespace TonThatCamTuanAPI.Controllers
         {
             var item = _context.Products.FirstOrDefault(x => x.Id == id);
 
-                var temp = JsonSerializer.Deserialize<List<OutputImage>>(item.Image);
-                foreach(var img in temp)
-                {
-                        UploadFiles.RemoveImage(img.UrlImage);
-                }
-                
-                _context.Products.Remove(item);
-                _context.SaveChanges();
+            var temp = JsonSerializer.Deserialize<List<OutputImage>>(item.Image);
+            foreach (var img in temp)
+            {
+                UploadFiles.RemoveImage(img.UrlImage);
+            }
+
+            _context.Products.Remove(item);
+            _context.SaveChanges();
             return Ok();
         }
         [HttpPost("tao-product")]
@@ -97,7 +123,7 @@ namespace TonThatCamTuanAPI.Controllers
                 foreach (var img in input.Images)
                 {
                     i++;
-                    OutputImage outputImage = OutputImage.Instance;
+                    OutputImage outputImage = new OutputImage();
                     outputImage.UrlImage = UploadFiles.SaveImage(img);
                     outputImage.Position = i;
                     listImages.Add(outputImage);
@@ -115,7 +141,7 @@ namespace TonThatCamTuanAPI.Controllers
         [HttpPut("cap-nhat-product/{id}")]
         public IActionResult CapNhat(string id, [FromForm] InputProduct input)
         {
-           
+
             var item = _context.Products.FirstOrDefault(c => c.Id == id.ToString());
             if (item != null)
             {
@@ -125,7 +151,13 @@ namespace TonThatCamTuanAPI.Controllers
                 item.Material = input.Material;
                 item.Size = input.Size;
                 item.Filter = input.Detail + " " + input.ProductName.ToLower() + " " + Common.Utility.ConvertToUnsign(input.ProductName.ToLower()) + " " + input.Price;
-
+                if(input.Images == null)
+                {
+                    item.Image = item.Image;
+                    _context.Update(item);
+                    _context.SaveChanges();
+                    return Ok();
+                }
                 var temp = JsonSerializer.Deserialize<List<OutputImage>>(item.Image);
                 foreach (var img in temp)
                 {

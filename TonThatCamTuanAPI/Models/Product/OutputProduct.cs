@@ -16,6 +16,6 @@ namespace TonThatCamTuanAPI.Models.Product
 
         public string? Material { get; set; }
         public string? Size { get; set; }
-        
+
     }
 }
