@@ -97,7 +97,7 @@ namespace TonThatCamTuanAPI.Controllers
                 foreach (var img in input.Images)
                 {
                     i++;
-                    OutputImage outputImage = new OutputImage();
+                    OutputImage outputImage = OutputImage.Instance;
                     outputImage.UrlImage = UploadFiles.SaveImage(img);
                     outputImage.Position = i;
                     listImages.Add(outputImage);
