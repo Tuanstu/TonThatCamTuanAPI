@@ -10,14 +10,25 @@ namespace TonThatCamTuanAPI.Models.Entity;
 public partial class Order
 {
     [Key]
-    [StringLength(100)]
     public string Id { get; set; } = null!;
 
-    public int? Quantity { get; set; }
+    [StringLength(450)]
+    public string? ProductId { get; set; }
 
-    [Column(TypeName = "money")]
-    public decimal? Amount { get; set; }
+    public int? ProductQuantity { get; set; }
 
     [StringLength(150)]
-    public string? Item { get; set; }
+    public string? UserName { get; set; }
+
+    [StringLength(10)]
+    public string? Sodienthoai { get; set; }
+
+    [StringLength(150)]
+    public string? Diachi { get; set; }
+
+    [StringLength(100)]
+    public string? Ngaytao { get; set; }
+
+    [StringLength(450)]
+    public string? OrderId { get; set; }
 }
